@@ -175,32 +175,36 @@ func (cc *cupsCore) getPPD(printername *C.char, modtime *C.time_t) (*C.char, err
 
 	httpStatus := C.cupsGetPPD3(http, printername, modtime, buffer, bufsize)
 
-	switch httpStatus {
-	case C.HTTP_STATUS_NOT_MODIFIED:
-		// Cache hit.
-		if len(C.GoString(buffer)) > 0 {
-			os.Remove(C.GoString(buffer))
-		}
-		C.free(unsafe.Pointer(buffer))
-		return nil, nil
+        switch httpStatus {
+        case C.HTTP_STATUS_NOT_MODIFIED:
+                // Cache hit.
+                if len(C.GoString(buffer)) > 0 {
+                        os.Remove(C.GoString(buffer))
+                }
+                C.free(unsafe.Pointer(buffer))
+                return nil, nil
 
-	case C.HTTP_STATUS_OK:
-		// Cache miss.
-		return buffer, nil
+        case C.HTTP_STATUS_OK:
+                // Cache miss.
+                return buffer, nil
 
-	default:
-		if len(C.GoString(buffer)) > 0 {
-			os.Remove(C.GoString(buffer))
-		}
-		C.free(unsafe.Pointer(buffer))
-		cupsLastError := C.cupsLastError()
-		if cupsLastError != C.IPP_STATUS_OK {
-			return nil, fmt.Errorf("Failed to call cupsGetPPD3(): %d %s",
-				int(cupsLastError), C.GoString(C.cupsLastErrorString()))
-		}
+        case C.HTTP_STATUS_NOT_FOUND:
+                // printer does not exist @ cups
+                if len(C.GoString(buffer)) > 0 {
+                        os.Remove(C.GoString(buffer))
+                }
+                C.free(unsafe.Pointer(buffer))
+                return nil, fmt.Errorf("printer does not exist: %d %s",
+                                404, printername)
 
-		return nil, fmt.Errorf("Failed to call cupsGetPPD3(); HTTP status: %d", int(httpStatus))
-	}
+        default:
+                //ignore all other errors, may be temporary
+                if len(C.GoString(buffer)) > 0 {
+                        os.Remove(C.GoString(buffer))
+                }
+                C.free(unsafe.Pointer(buffer))
+                return nil,nil
+        }
 }
 
 // getJobAttributes gets the requested attributes for a job by calling
