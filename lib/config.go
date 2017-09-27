@@ -35,7 +35,7 @@ var (
 
 	// To be populated by something like:
 	// go install -ldflags "-X github.com/avlis/cloud-print-connector/lib.BuildDate=`date +%Y.%m.%d`"
-	BuildDate = "DEV"
+	BuildDate = "20170927"
 
 	ShortName = platformName + " Connector " + BuildDate + "-" + runtime.GOOS
 
