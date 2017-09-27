@@ -194,8 +194,7 @@ func (cc *cupsCore) getPPD(printername *C.char, modtime *C.time_t) (*C.char, err
                         os.Remove(C.GoString(buffer))
                 }
                 C.free(unsafe.Pointer(buffer))
-                return nil, fmt.Errorf("printer does not exist: %d %s",
-                                404, printername)
+                return nil, fmt.Errorf("printer does not exist: %d", httpStatus)
 
         default:
                 //ignore all other errors, may be temporary
