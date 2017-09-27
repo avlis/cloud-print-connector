@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/cloud-print-connector/log"
+	"github.com/avlis/cloud-print-connector/log"
 )
 
 type PrinterNotificationType uint8

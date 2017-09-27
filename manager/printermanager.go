@@ -17,12 +17,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/cloud-print-connector/cdd"
-	"github.com/google/cloud-print-connector/gcp"
-	"github.com/google/cloud-print-connector/lib"
-	"github.com/google/cloud-print-connector/log"
-	"github.com/google/cloud-print-connector/privet"
-	"github.com/google/cloud-print-connector/xmpp"
+	"github.com/avlis/cloud-print-connector/cdd"
+	"github.com/avlis/cloud-print-connector/gcp"
+	"github.com/avlis/cloud-print-connector/lib"
+	"github.com/avlis/cloud-print-connector/log"
+	"github.com/avlis/cloud-print-connector/privet"
+	"github.com/avlis/cloud-print-connector/xmpp"
 )
 
 type NativePrintSystem interface {
