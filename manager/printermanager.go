@@ -17,12 +17,22 @@ import (
 	"sync"
 	"time"
 
+<<<<<<< HEAD
 	"github.com/avlis/cloud-print-connector/cdd"
 	"github.com/avlis/cloud-print-connector/gcp"
 	"github.com/avlis/cloud-print-connector/lib"
 	"github.com/avlis/cloud-print-connector/log"
 	"github.com/avlis/cloud-print-connector/privet"
 	"github.com/avlis/cloud-print-connector/xmpp"
+=======
+	"github.com/google/cloud-print-connector/cdd"
+	"github.com/google/cloud-print-connector/gcp"
+	"github.com/google/cloud-print-connector/lib"
+	"github.com/google/cloud-print-connector/log"
+	"github.com/google/cloud-print-connector/notification"
+	"github.com/google/cloud-print-connector/privet"
+	"github.com/google/cloud-print-connector/xmpp"
+>>>>>>> google/master
 )
 
 type NativePrintSystem interface {
@@ -59,7 +69,7 @@ type PrinterManager struct {
 	quit chan struct{}
 }
 
-func NewPrinterManager(native NativePrintSystem, gcp *gcp.GoogleCloudPrint, privet *privet.Privet, printerPollInterval time.Duration, nativeJobQueueSize uint, jobFullUsername bool, shareScope string, jobs <-chan *lib.Job, xmppNotifications <-chan xmpp.PrinterNotification) (*PrinterManager, error) {
+func NewPrinterManager(native NativePrintSystem, gcp *gcp.GoogleCloudPrint, privet *privet.Privet, printerPollInterval time.Duration, nativeJobQueueSize uint, jobFullUsername bool, shareScope string, jobs <-chan *lib.Job, notifications <-chan notification.PrinterNotification) (*PrinterManager, error) {
 	var printers *lib.ConcurrentPrinterMap
 	var queuedJobsCount map[string]uint
 
@@ -122,7 +132,7 @@ func NewPrinterManager(native NativePrintSystem, gcp *gcp.GoogleCloudPrint, priv
 	}
 
 	pm.syncPrintersPeriodically(printerPollInterval)
-	pm.listenNotifications(jobs, xmppNotifications)
+	pm.listenNotifications(jobs, notifications)
 
 	if gcp != nil {
 		for gcpPrinterID := range queuedJobsCount {
@@ -288,7 +298,7 @@ func (pm *PrinterManager) applyDiff(diff *lib.PrinterDiff, ch chan<- lib.Printer
 }
 
 // listenNotifications handles the messages found on the channels.
-func (pm *PrinterManager) listenNotifications(jobs <-chan *lib.Job, xmppMessages <-chan xmpp.PrinterNotification) {
+func (pm *PrinterManager) listenNotifications(jobs <-chan *lib.Job, messages <-chan notification.PrinterNotification) {
 	go func() {
 		for {
 			select {
@@ -299,10 +309,10 @@ func (pm *PrinterManager) listenNotifications(jobs <-chan *lib.Job, xmppMessages
 				log.DebugJobf(job.JobID, "Received job: %+v", job)
 				go pm.printJob(job.NativePrinterName, job.Filename, job.Title, job.User, job.JobID, job.Ticket, job.UpdateJob)
 
-			case notification := <-xmppMessages:
-				log.Debugf("Received XMPP message: %+v", notification)
-				if notification.Type == xmpp.PrinterNewJobs {
-					if p, exists := pm.printers.GetByGCPID(notification.GCPID); exists {
+			case message := <-messages:
+				log.Debugf("Received message: %+v", message)
+				if message.Type == notification.PrinterNewJobs {
+					if p, exists := pm.printers.GetByGCPID(message.GCPID); exists {
 						go pm.gcp.HandleJobs(&p, func() { pm.incrementJobsProcessed(false) })
 					}
 				}
