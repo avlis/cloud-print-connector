@@ -188,14 +188,6 @@ func (cc *cupsCore) getPPD(printername *C.char, modtime *C.time_t) (*C.char, err
                 // Cache miss.
                 return buffer, nil
 
-        case C.HTTP_STATUS_NOT_FOUND:
-                // printer does not exist @ cups
-                if len(C.GoString(buffer)) > 0 {
-                        os.Remove(C.GoString(buffer))
-                }
-                C.free(unsafe.Pointer(buffer))
-                return nil, fmt.Errorf("printer does not exist: %d", httpStatus)
-
         default:
                 //ignore all other errors, may be temporary
                 if len(C.GoString(buffer)) > 0 {
