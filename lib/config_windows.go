@@ -28,6 +28,9 @@ type Config struct {
 	// Enable cloud discovery and printing.
 	CloudPrintingEnable bool `json:"cloud_printing_enable"`
 
+	// Disable printer deletion on cloud.
+	DisablePrinterDeletionOnCloud bool `json:"disable_printer_deletion_on_cloud"`
+
 	// Associated with root account. XMPP credential.
 	XMPPJID string `json:"xmpp_jid,omitempty"`
 
@@ -117,6 +120,7 @@ type Config struct {
 // Omitted Config fields are omitted on purpose; they are unique per
 // connector instance.
 var DefaultConfig = Config{
+	DisablePrinterDeletionOnCloud: false,
 	XMPPServer:                "talk.google.com",
 	XMPPPort:                  443,
 	XMPPPingTimeout:           "5s",

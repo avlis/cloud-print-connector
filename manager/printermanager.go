@@ -273,11 +273,15 @@ func (pm *PrinterManager) applyDiff(diff *lib.PrinterDiff, ch chan<- lib.Printer
 		pm.native.RemoveCachedPPD(diff.Printer.Name)
 
 		if pm.gcp != nil {
-			if err := pm.gcp.Delete(diff.Printer.GCPID); err != nil {
-				log.ErrorPrinterf(diff.Printer.Name+" "+diff.Printer.GCPID, "Failed to delete from the cloud: %s", err)
-				break
+			if config.DisablePrinterDeletionOnCloud {
+				log.InfoPrinterf(diff.Printer.Name+" "+diff.Printer.GCPID, "would be deleted from the cloud, but deletion is disabled.")
+			} else {
+				if err := pm.gcp.Delete(diff.Printer.GCPID); err != nil {
+					log.ErrorPrinterf(diff.Printer.Name+" "+diff.Printer.GCPID, "Failed to delete from the cloud: %s", err)
+					break
+				}
+				log.InfoPrinterf(diff.Printer.Name+" "+diff.Printer.GCPID, "Deleted from the cloud")
 			}
-			log.InfoPrinterf(diff.Printer.Name+" "+diff.Printer.GCPID, "Deleted from the cloud")
 		}
 
 		if pm.privet != nil && !ignorePrivet {

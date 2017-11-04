@@ -40,7 +40,7 @@ var (
 
 	// To be populated by something like:
 	// go install -ldflags "-X github.com/avlis/cloud-print-connector/lib.BuildDate=`date +%Y.%m.%d`"
-	BuildDate = "20170927"
+	BuildDate = "20171104"
 
 	ShortName = platformName + " Connector " + BuildDate + "-" + runtime.GOOS
 
@@ -229,6 +229,9 @@ func (c *Config) commonBackfill(configMap map[string]interface{}) *Config {
 	}
 	if _, exists := configMap["cloud_printing_enable"]; !exists {
 		b.CloudPrintingEnable = DefaultConfig.CloudPrintingEnable
+	}
+	if _, exists := configMap["disable_printer_deletion_on_cloud"]; !exists {
+		b.CloudPrintingEnable = DefaultConfig.DisablePrinterDeletionOnCloud
 	}
 	if _, exists := configMap["log_level"]; !exists {
 		b.LogLevel = DefaultConfig.LogLevel
