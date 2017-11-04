@@ -14,23 +14,12 @@ import (
 	"os"
 	"time"
 
-<<<<<<< HEAD
 	"github.com/avlis/cloud-print-connector/gcp"
 	"github.com/avlis/cloud-print-connector/lib"
 	"github.com/avlis/cloud-print-connector/log"
 	"github.com/avlis/cloud-print-connector/manager"
 	"github.com/avlis/cloud-print-connector/winspool"
 	"github.com/avlis/cloud-print-connector/xmpp"
-=======
-	"github.com/google/cloud-print-connector/fcm"
-	"github.com/google/cloud-print-connector/gcp"
-	"github.com/google/cloud-print-connector/lib"
-	"github.com/google/cloud-print-connector/log"
-	"github.com/google/cloud-print-connector/manager"
-	"github.com/google/cloud-print-connector/notification"
-	"github.com/google/cloud-print-connector/winspool"
-	"github.com/google/cloud-print-connector/xmpp"
->>>>>>> google/master
 	"github.com/urfave/cli"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"

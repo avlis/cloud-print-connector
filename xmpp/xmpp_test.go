@@ -24,12 +24,7 @@ import (
 	"testing"
 	"time"
 
-<<<<<<< HEAD
 	"github.com/avlis/cloud-print-connector/xmpp"
-=======
-	"github.com/google/cloud-print-connector/notification"
-	"github.com/google/cloud-print-connector/xmpp"
->>>>>>> google/master
 )
 
 func TestXMPP_proxyauth(t *testing.T) {
