@@ -32,7 +32,6 @@ func main() {
 	app.Version = lib.BuildDate
 	app.Flags = []cli.Flag{
 		lib.ConfigFilenameFlag,
-		lib.UseFcm,
 	}
 	app.Action = runService
 	app.Run(os.Args)
@@ -74,7 +73,6 @@ func runService(context *cli.Context) error {
 }
 
 func (service *service) Execute(args []string, r <-chan svc.ChangeRequest, s chan<- svc.Status) (bool, uint32) {
-	useFcm := context.Bool("gcp-use-fcm")
 	if service.interactive {
 		if err := log.Start(true); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to start event log: %s\n", err)
@@ -120,11 +118,10 @@ func (service *service) Execute(args []string, r <-chan svc.ChangeRequest, s cha
 	}
 
 	jobs := make(chan *lib.Job, 10)
-	notifications := make(chan notification.PrinterNotification, 5)
+	xmppNotifications := make(chan xmpp.PrinterNotification, 5)
 
 	var g *gcp.GoogleCloudPrint
 	var x *xmpp.XMPP
-	var f *fcm.FCM
 	if config.CloudPrintingEnable {
 		xmppPingTimeout, err := time.ParseDuration(config.XMPPPingTimeout)
 		if err != nil {
@@ -140,27 +137,19 @@ func (service *service) Execute(args []string, r <-chan svc.ChangeRequest, s cha
 		g, err = gcp.NewGoogleCloudPrint(config.GCPBaseURL, config.RobotRefreshToken,
 			config.UserRefreshToken, config.ProxyName, config.GCPOAuthClientID,
 			config.GCPOAuthClientSecret, config.GCPOAuthAuthURL, config.GCPOAuthTokenURL,
-			config.GCPMaxConcurrentDownloads, jobs, useFcm)
+			config.GCPMaxConcurrentDownloads, jobs)
 		if err != nil {
 			log.Fatal(err)
 			return false, 1
 		}
-		if useFcm {
-			f, err = fcm.NewFCM(config.GCPOAuthClientID, config.ProxyName, config.FcmServerBindUrl, g.FcmSubscribe, notifications)
-			if err != nil {
-				log.Fatal(err)
-				return cli.NewExitError(err.Error(), 1)
-			}
-			defer f.Quit()
-		} else {
-			x, err = xmpp.NewXMPP(config.XMPPJID, config.ProxyName, config.XMPPServer, config.XMPPPort,
-				xmppPingTimeout, xmppPingInterval, g.GetRobotAccessToken, notifications)
-			if err != nil {
-				log.Fatal(err)
-				return false, 1
-			}
-			defer x.Quit()
+
+		x, err = xmpp.NewXMPP(config.XMPPJID, config.ProxyName, config.XMPPServer, config.XMPPPort,
+			xmppPingTimeout, xmppPingInterval, g.GetRobotAccessToken, xmppNotifications)
+		if err != nil {
+			log.Fatal(err)
+			return false, 1
 		}
+		defer x.Quit()
 	}
 
 	ws, err := winspool.NewWinSpool(*config.PrefixJobIDToJobTitle, config.DisplayNamePrefix, config.PrinterBlacklist, config.PrinterWhitelist)
@@ -175,17 +164,13 @@ func (service *service) Execute(args []string, r <-chan svc.ChangeRequest, s cha
 		return false, 1
 	}
 	pm, err := manager.NewPrinterManager(ws, g, nil, nativePrinterPollInterval,
-		config.NativeJobQueueSize, *config.CUPSJobFullUsername, config.ShareScope, jobs, notifications)
+		config.NativeJobQueueSize, *config.CUPSJobFullUsername, config.ShareScope, jobs, xmppNotifications)
 	if err != nil {
 		log.Fatal(err)
 		return false, 1
 	}
 	defer pm.Quit()
 
-	// Init FCM client after printers are registered
-	if useFcm && config.CloudPrintingEnable {
-		f.Init()
-	}
 	statusHandle := svc.StatusHandle()
 	if statusHandle != 0 {
 		err = ws.StartPrinterNotifications(statusHandle)

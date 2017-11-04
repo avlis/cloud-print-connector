@@ -42,7 +42,7 @@ type internalXMPP struct {
 	xmlDecoder *xml.Decoder
 	fullJID    string
 
-	notifications chan<- notification.PrinterNotification
+	notifications chan<- PrinterNotification
 	pongs         chan uint8
 	nextPingID    uint8
 	dead          chan<- struct{}
@@ -53,7 +53,7 @@ type internalXMPP struct {
 // Received XMPP notifications are sent on the notifications channel.
 //
 // If the connection dies unexpectedly, a message is sent on dead.
-func newInternalXMPP(jid, accessToken, proxyName, server string, port uint16, pingTimeout, pingInterval time.Duration, notifications chan<- notification.PrinterNotification, dead chan<- struct{}) (*internalXMPP, error) {
+func newInternalXMPP(jid, accessToken, proxyName, server string, port uint16, pingTimeout, pingInterval time.Duration, notifications chan<- PrinterNotification, dead chan<- struct{}) (*internalXMPP, error) {
 	var user, domain string
 	if parts := strings.SplitN(jid, "@", 2); len(parts) != 2 {
 		return nil, fmt.Errorf("Tried to use invalid XMPP JID: %s", jid)
@@ -188,11 +188,11 @@ func (x *internalXMPP) dispatchIncoming(dying chan<- struct{}) {
 			if strings.ContainsRune(messageDataString, '/') {
 				if strings.HasSuffix(messageDataString, "/delete") {
 					gcpID := strings.TrimSuffix(messageDataString, "/delete")
-					x.notifications <- notification.PrinterNotification{gcpID, notification.PrinterDelete}
+					x.notifications <- PrinterNotification{gcpID, PrinterDelete}
 				}
 				// Ignore other suffixes, like /update_settings.
 			} else {
-				x.notifications <- notification.PrinterNotification{messageDataString, notification.PrinterNewJobs}
+				x.notifications <- PrinterNotification{messageDataString, PrinterNewJobs}
 			}
 
 		} else if startElement.Name.Local == "iq" {

@@ -59,7 +59,7 @@ type PrinterManager struct {
 	quit chan struct{}
 }
 
-func NewPrinterManager(native NativePrintSystem, gcp *gcp.GoogleCloudPrint, privet *privet.Privet, printerPollInterval time.Duration, nativeJobQueueSize uint, jobFullUsername bool, shareScope string, jobs <-chan *lib.Job, notifications <-chan notification.PrinterNotification) (*PrinterManager, error) {
+func NewPrinterManager(native NativePrintSystem, gcp *gcp.GoogleCloudPrint, privet *privet.Privet, printerPollInterval time.Duration, nativeJobQueueSize uint, jobFullUsername bool, shareScope string, jobs <-chan *lib.Job, xmppNotifications <-chan xmpp.PrinterNotification) (*PrinterManager, error) {
 	var printers *lib.ConcurrentPrinterMap
 	var queuedJobsCount map[string]uint
 
@@ -122,7 +122,7 @@ func NewPrinterManager(native NativePrintSystem, gcp *gcp.GoogleCloudPrint, priv
 	}
 
 	pm.syncPrintersPeriodically(printerPollInterval)
-	pm.listenNotifications(jobs, notifications)
+	pm.listenNotifications(jobs, xmppNotifications)
 
 	if gcp != nil {
 		for gcpPrinterID := range queuedJobsCount {
@@ -292,7 +292,7 @@ func (pm *PrinterManager) applyDiff(diff *lib.PrinterDiff, ch chan<- lib.Printer
 }
 
 // listenNotifications handles the messages found on the channels.
-func (pm *PrinterManager) listenNotifications(jobs <-chan *lib.Job, messages <-chan notification.PrinterNotification) {
+func (pm *PrinterManager) listenNotifications(jobs <-chan *lib.Job, xmppMessages <-chan xmpp.PrinterNotification) {
 	go func() {
 		for {
 			select {
@@ -303,10 +303,10 @@ func (pm *PrinterManager) listenNotifications(jobs <-chan *lib.Job, messages <-c
 				log.DebugJobf(job.JobID, "Received job: %+v", job)
 				go pm.printJob(job.NativePrinterName, job.Filename, job.Title, job.User, job.JobID, job.Ticket, job.UpdateJob)
 
-			case message := <-messages:
-				log.Debugf("Received message: %+v", message)
-				if message.Type == notification.PrinterNewJobs {
-					if p, exists := pm.printers.GetByGCPID(message.GCPID); exists {
+			case notification := <-xmppMessages:
+				log.Debugf("Received XMPP message: %+v", notification)
+				if notification.Type == xmpp.PrinterNewJobs {
+					if p, exists := pm.printers.GetByGCPID(notification.GCPID); exists {
 						go pm.gcp.HandleJobs(&p, func() { pm.incrementJobsProcessed(false) })
 					}
 				}

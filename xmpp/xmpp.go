@@ -17,6 +17,16 @@ import (
 
 type PrinterNotificationType uint8
 
+const (
+	PrinterNewJobs PrinterNotificationType = iota
+	PrinterDelete
+)
+
+type PrinterNotification struct {
+	GCPID string
+	Type  PrinterNotificationType
+}
+
 type XMPP struct {
 	jid            string
 	proxyName      string
@@ -26,7 +36,7 @@ type XMPP struct {
 	pingInterval   time.Duration
 	getAccessToken func() (string, error)
 
-	notifications chan<- notification.PrinterNotification
+	notifications chan<- PrinterNotification
 	dead          chan struct{}
 
 	quit chan struct{}
@@ -34,7 +44,7 @@ type XMPP struct {
 	ix *internalXMPP
 }
 
-func NewXMPP(jid, proxyName, server string, port uint16, pingTimeout, pingInterval time.Duration, getAccessToken func() (string, error), notifications chan<- notification.PrinterNotification) (*XMPP, error) {
+func NewXMPP(jid, proxyName, server string, port uint16, pingTimeout, pingInterval time.Duration, getAccessToken func() (string, error), notifications chan<- PrinterNotification) (*XMPP, error) {
 	x := XMPP{
 		jid:            jid,
 		proxyName:      proxyName,
