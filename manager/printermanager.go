@@ -56,6 +56,8 @@ type PrinterManager struct {
 	jobFullUsername    bool
 	shareScope         string
 
+	disablePrinterDeletionOnCloud	bool
+
 	quit chan struct{}
 }
 
@@ -99,7 +101,7 @@ func NewPrinterManager(native NativePrintSystem, gcp *gcp.GoogleCloudPrint, priv
 		jobFullUsername:    jobFullUsername,
 		shareScope:         shareScope,
 
-		disablePrinterDeletionOnCloud: DisablePrinterDeletionOnCloud,
+		disablePrinterDeletionOnCloud: disablePrinterDeletionOnCloud,
 
 		quit: make(chan struct{}),
 	}
