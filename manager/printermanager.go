@@ -59,7 +59,7 @@ type PrinterManager struct {
 	quit chan struct{}
 }
 
-func NewPrinterManager(native NativePrintSystem, gcp *gcp.GoogleCloudPrint, privet *privet.Privet, printerPollInterval time.Duration, nativeJobQueueSize uint, jobFullUsername bool, shareScope string, jobs <-chan *lib.Job, xmppNotifications <-chan xmpp.PrinterNotification) (*PrinterManager, error) {
+func NewPrinterManager(native NativePrintSystem, gcp *gcp.GoogleCloudPrint, privet *privet.Privet, printerPollInterval time.Duration, nativeJobQueueSize uint, jobFullUsername bool, shareScope string, jobs <-chan *lib.Job, xmppNotifications <-chan xmpp.PrinterNotification, disablePrinterDeletionOnCloud bool) (*PrinterManager, error) {
 	var printers *lib.ConcurrentPrinterMap
 	var queuedJobsCount map[string]uint
 
@@ -98,6 +98,8 @@ func NewPrinterManager(native NativePrintSystem, gcp *gcp.GoogleCloudPrint, priv
 		nativeJobQueueSize: nativeJobQueueSize,
 		jobFullUsername:    jobFullUsername,
 		shareScope:         shareScope,
+
+		disablePrinterDeletionOnCloud: DisablePrinterDeletionOnCloud,
 
 		quit: make(chan struct{}),
 	}
@@ -263,7 +265,7 @@ func (pm *PrinterManager) applyDiff(diff *lib.PrinterDiff, ch chan<- lib.Printer
 		pm.native.RemoveCachedPPD(diff.Printer.Name)
 
 		if pm.gcp != nil {
-			if config.DisablePrinterDeletionOnCloud {
+			if pm.DisablePrinterDeletionOnCloud {
 				log.InfoPrinterf(diff.Printer.Name+" "+diff.Printer.GCPID, "would be deleted from the cloud, but deletion is disabled.")
 			} else {
 				if err := pm.gcp.Delete(diff.Printer.GCPID); err != nil {
